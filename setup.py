@@ -27,7 +27,7 @@ setup(
     packages=find_packages(exclude=['tests']),
     install_requires=[
         'requests',
-        'fake-useragent',
+        'grequests',
     ],
     classifiers=[
         'Development Status :: 3 - Alpha',
