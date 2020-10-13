@@ -13,7 +13,7 @@ s = ninja_session(key='KJHGFSERTYUIO87654323ERFGHUIO876543', fakeua=True, retry=
 
 # once loaded, use it as regular requests.Session:
 
-r = s.get('https://your_www_request')
+r = s.get('https://your_www_request', accepted_code=[200,301,302])
 print(r.text)
 # '......'
 ```
