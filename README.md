@@ -1,5 +1,5 @@
 # scrapy-ninja-requests
-This package provides an enriched [Requests](https://pypi.org/project/requests/) class to use failover rotating proxies.
+This package provides an enriched [Requests](https://pypi.org/project/requests/) class to use failover rotating proxies, automatically provided within [scrapy.ninja](https://scrapy.ninja/) services subscription.
 - rotating proxies
 - proxy assignment optimisation
 - multi thread (synchr=True & syncpool=5)
