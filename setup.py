@@ -26,6 +26,7 @@ setup(
     url='https://github.com/fliot/scrapy-ninja-requests',
     packages=find_packages(exclude=['tests']),
     install_requires=[
+        'tld',
         'requests',
         'grequests',
     ],

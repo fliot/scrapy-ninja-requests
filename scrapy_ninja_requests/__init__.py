@@ -5,6 +5,7 @@ import grequests
 import json
 import random
 import requests
+from tld import get_tld
 
 user_agent_list = [
    #Chrome
@@ -37,10 +38,10 @@ user_agent_list = [
 class ninja_session():
     
     def __init__(self, key=None, proxylist=[], fakeua=True, retry=0, synchr=False, syncpool=5, debug=False):
-
         self.req = requests.Session()
         self.fakeua = fakeua
         self.retry = retry
+        self.preferred = {}
         self.synchr = synchr
         self.syncpool = syncpool
         self.debug = debug
@@ -49,25 +50,28 @@ class ninja_session():
             r = self.req.get(url='https://scrapy.ninja/get_proxy.php?lic=%s' % self.key)
             for i in r.json()['proxies']:
                 proxylist.append(i)
-        
-        if len(proxylist) == 0:
-            raise Exception('No proxy')
-        
+        if len(proxylist) == 0: raise Exception('No proxy')
         random.shuffle(proxylist)
         self.proxylist = proxylist
         if self.retry == 0: self.retry = len(self.proxylist)
-        
         if self.debug: print("Proxies loaded (%s)" % len(self.proxylist))
     
     
-    
-    def get(self, url, headers={}, timeout=(), accepted_code=[]):
+    def get(self, url, headers={}, timeout=(), accepted_code=[200]):
         n = 0
         if timeout == (): timeout = (3.05, 27)
         resultat = None
+        preferred = False
+        
+        proxylist = self.proxylist
+        random.shuffle(proxylist)
+        fqdn = get_tld(url, as_object=True).fld
+        if fqdn in self.preferred.keys():
+            proxylist.insert(0, self.preferred[fqdn])
+            if self.debug: print("Preferred added (%s)" % self.preferred[fqdn])
         
         if not(self.synchr):
-            for i in self.proxylist[0:self.retry]:
+            for i in proxylist[0:self.retry]:
                 n += 1
                 
                 if self.fakeua: headers['User-Agent'] = random.choice(user_agent_list)
@@ -79,19 +83,18 @@ class ninja_session():
                     r = self.req.get(url, headers=headers, timeout=timeout, proxies=proxies)
                     if r.status_code in accepted_code:
                         resultat = r
+                        self.preferred[fqdn] = i
+                        if self.debug: print(self.preferred)
                         break
-                except:
-                    pass
-        
+                except: pass
         else:
             rs = []
-            proxylist = self.proxylist
-            random.shuffle(proxylist)
+            proxylist.reverse()
             for i in self.proxylist[0:self.retry]:
                 n += 1
                 if self.debug: print("Attempt %s" % n)
                 stop = False
-                for i in range(self.syncpool):  
+                for i in range(self.syncpool):
                     if self.fakeua: headers['User-Agent'] = random.choice(user_agent_list)
                     proxy = proxylist.pop()
                     proxies = { "http": "http://%s" % proxy, "https": "http://%s" % proxy }
@@ -100,12 +103,15 @@ class ninja_session():
                 res = grequests.map(rs)
                 for r in res:
                     try:
-                        if r.status_code in accepted_code: 
+                        if r.status_code in accepted_code:
                             resultat = r
                             stop=True
-                    except:
-                        pass
-                
+                            if not(preferred):
+                                for p in r.connection.proxy_manager.keys():
+                                    self.preferred[fqdn] = p.split("/")[-1]
+                                    preferred = True
+                                if self.debug: print(self.preferred)
+                    except: pass
                 if stop: break
         
         if self.debug: print("n=%s" % n)
