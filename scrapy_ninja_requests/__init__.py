@@ -57,7 +57,7 @@ class ninja_session():
         if self.debug: print("Proxies loaded (%s)" % len(self.proxylist))
     
     
-    def get(self, url, headers={}, timeout=(), accepted_code=[200]):
+    def get(self, url, headers={}, timeout=(), accepted_code=[200], unaccepted_strings=[], expected_string=None):
         n = 0
         if timeout == (): timeout = (3.05, 27)
         resultat = None
@@ -81,7 +81,21 @@ class ninja_session():
                     print(proxies)
                 try:
                     r = self.req.get(url, headers=headers, timeout=timeout, proxies=proxies)
-                    if r.status_code in accepted_code:
+                    accepted = True
+                    if r.status_code not in accepted_code:
+                        if self.debug: print(f"accepted status code ({r.status_code})")
+                        accepted = False
+                    for e in unaccepted_strings:
+                        if e in r.text:
+                            if self.debug: print(f"unaccepted match ({e})")
+                            accepted = False
+                    if expected_string is not None:
+                        if expected_string in r.text:
+                            if self.debug: print(f"expected string found ({expected_string})")
+                        else:
+                            if self.debug: print(f"expected string absent ({expected_string})")
+                            accepted = False
+                    if accepted:
                         resultat = r
                         self.preferred[fqdn] = i
                         if self.debug: print(self.preferred)
@@ -103,9 +117,22 @@ class ninja_session():
                 res = grequests.map(rs)
                 for r in res:
                     try:
-                        if r.status_code in accepted_code:
-                            resultat = r
-                            stop=True
+                        accepted = True
+                        if r.status_code not in accepted_code:
+                            if self.debug: print(f"accepted status code ({r.status_code})")
+                            accepted = False
+                        for e in unaccepted_strings:
+                            if e in r.text:
+                                if self.debug: print(f"unaccepted match ({e})")
+                                accepted = False
+                        if expected_string is not None:
+                            if expected_string in r.text:
+                                if self.debug: print(f"expected string found ({expected_string})")
+                            else:
+                                if self.debug: print(f"expected string absent ({expected_string})")
+                                accepted = False
+                        if accepted:
+                            stop =True
                             if not(preferred):
                                 for p in r.connection.proxy_manager.keys():
                                     self.preferred[fqdn] = p.split("/")[-1]
