@@ -119,20 +119,28 @@ class ninja_session():
                     try:
                         accepted = True
                         if r.status_code not in accepted_code:
-                            if self.debug: print(f"accepted status code ({r.status_code})")
+                            if self.debug: print(f"not accepted status code ({r.status_code})")
                             accepted = False
+                        else:
+                            if self.debug: print(f"ok  accepted status code ({r.status_code})")
+                            
                         for e in unaccepted_strings:
                             if e in r.text:
                                 if self.debug: print(f"unaccepted match ({e})")
                                 accepted = False
+                        
                         if expected_string is not None:
                             if expected_string in r.text:
-                                if self.debug: print(f"expected string found ({expected_string})")
+                                if self.debug: print(f"ok  expected string found ({expected_string})")
                             else:
-                                if self.debug: print(f"expected string absent ({expected_string})")
+                                if self.debug: print(f"not expected string found ({expected_string})")
                                 accepted = False
+                        else:
+                            if self.debug: print(f"ok  expected string unset")
+                        
                         if accepted:
                             stop =True
+                            resultat = r
                             if not(preferred):
                                 for p in r.connection.proxy_manager.keys():
                                     self.preferred[fqdn] = p.split("/")[-1]
