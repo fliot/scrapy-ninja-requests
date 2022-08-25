@@ -9,7 +9,7 @@ This package provides an enriched [Requests](https://pypi.org/project/requests/)
 ```
 from scrapy_ninja_requests import ninja_session
 
-s = ninja_session(key='KJHGFSERTYUIO87654323ERFGHUIO876543', fakeua=True, retry=3, synchr=True, syncpool=20)
+s = ninja_session(key='KJHGFSERTYUIO87654323ERFGHUIO876543', fakeua=True, country="US", retry=3, synchr=True, syncpool=20)
 
 # once loaded, use it as regular requests.Session:
 

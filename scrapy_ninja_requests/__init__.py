@@ -37,7 +37,7 @@ user_agent_list = [
 
 class ninja_session():
     
-    def __init__(self, key=None, proxylist=[], fakeua=True, retry=0, synchr=False, syncpool=5, debug=False):
+    def __init__(self, key=None, proxylist=[], country=None, fakeua=True, retry=0, synchr=False, syncpool=5, debug=False):
         self.req = requests.Session()
         self.fakeua = fakeua
         self.retry = retry
@@ -47,7 +47,8 @@ class ninja_session():
         self.debug = debug
         self.key = key
         if not(self.key is None):
-            r = self.req.get(url='https://scrapy.ninja/get_proxy.php?lic=%s' % self.key)
+            if country is None: country = "XX"
+            r = self.req.get(url='https://scrapy.ninja/get_proxy.php?lic=%s&country=%s' % (self.key, country))
             for i in r.json()['proxies']:
                 proxylist.append(i)
         if len(proxylist) == 0: raise Exception('No proxy')
