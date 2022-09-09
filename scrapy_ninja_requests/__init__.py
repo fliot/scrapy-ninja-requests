@@ -1,5 +1,5 @@
 # -*- coding: utf-8 -*-
-__version__ = '0.1.0'
+__version__ = '0.1.2'
 
 import grequests
 import json
@@ -37,7 +37,7 @@ user_agent_list = [
 
 class ninja_session():
     
-    def __init__(self, key=None, proxylist=[], country=None, fakeua=True, retry=0, synchr=False, syncpool=5, debug=False):
+    def __init__(self, key=None, proxylist=[], country="XX", fakeua=True, retry=1, synchr=False, syncpool=5, debug=False):
         self.req = requests.Session()
         self.fakeua = fakeua
         self.retry = retry
@@ -46,17 +46,28 @@ class ninja_session():
         self.syncpool = syncpool
         self.debug = debug
         self.key = key
-        if not(self.key is None):
-            if country is None: country = "XX"
-            r = self.req.get(url='https://scrapy.ninja/get_proxy.php?lic=%s&country=%s' % (self.key, country))
-            for i in r.json()['proxies']:
-                proxylist.append(i)
-        if len(proxylist) == 0: raise Exception('No proxy')
-        random.shuffle(proxylist)
-        self.proxylist = proxylist
-        if self.retry == 0: self.retry = len(self.proxylist)
-        if self.debug: print("Proxies loaded (%s)" % len(self.proxylist))
+        self.country = country
+        if self.country is None: self.country = 'XX'
+        self.proxyIni = proxylist
+        self.proxylist = []
+        self.update_proxies()
+        self.retry == min(retry, len(self.proxylist) - 1)
     
+    def update_proxies(self):
+        # bring your own proxies
+        for i in self.proxyIni:
+            if i not in self.proxylist:
+                self.proxylist.append(i)
+        
+        # scrapy ninja provided
+        if not(self.key is None):
+            r = self.req.get(url='https://scrapy.ninja/get_proxy.php?lic=%s&country=%s' % (self.key, self.country))
+            for i in r.json()['proxies']:
+                self.proxylist.append(i)
+        
+        if len(self.proxylist) == 0: raise Exception('No proxy')
+        random.shuffle(self.proxylist)
+        if self.debug: print("Proxies loaded (%s)" % len(self.proxylist))
     
     def get(self, url, headers={}, timeout=(), accepted_code=[200], unaccepted_strings=[], expected_string=None):
         n = 0
@@ -68,10 +79,29 @@ class ninja_session():
         random.shuffle(proxylist)
         fqdn = get_tld(url, as_object=True).fld
         if fqdn in self.preferred.keys():
-            proxylist.insert(0, self.preferred[fqdn])
-            if self.debug: print("Preferred added (%s)" % self.preferred[fqdn])
+            if self.debug: print("Preferred used (%s)" % self.preferred[fqdn])
+            try:
+                r = self.req.get(url, headers=headers, timeout=timeout, proxies=proxies)
+                accepted = True
+                if r.status_code not in accepted_code:
+                    if self.debug: print(f"accepted status code ({r.status_code})")
+                    accepted = False
+                for e in unaccepted_strings:
+                    if e in r.text:
+                        if self.debug: print(f"unaccepted match ({e})")
+                        accepted = False
+                if expected_string is not None:
+                    if expected_string in r.text:
+                        if self.debug: print(f"expected string found ({expected_string})")
+                    else:
+                        if self.debug: print(f"expected string absent ({expected_string})")
+                        accepted = False
+                if accepted:
+                    return r
+            except: pass
         
         if not(self.synchr):
+            if len(proxyList) < self.retry: self.update_proxies()
             for i in proxylist[0:self.retry]:
                 n += 1
                 
