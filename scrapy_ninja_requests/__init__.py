@@ -141,6 +141,7 @@ class ninja_session():
                 stop = False
                 for i in range(self.syncpool):
                     if self.fakeua: headers['User-Agent'] = random.choice(user_agent_list)
+                    if len(proxylist) == 0: self.update_proxies()
                     proxy = proxylist.pop()
                     proxies = { "http": "http://%s" % proxy, "https": "http://%s" % proxy }
                     if self.debug: print(proxies)
