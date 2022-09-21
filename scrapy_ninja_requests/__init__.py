@@ -101,7 +101,7 @@ class ninja_session():
             except: pass
         
         if not(self.synchr):
-            if len(proxyList) < self.retry: self.update_proxies()
+            if len(proxylist) < self.retry: self.update_proxies()
             for i in proxylist[0:self.retry]:
                 n += 1
                 
