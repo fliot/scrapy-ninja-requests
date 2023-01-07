@@ -60,6 +60,7 @@ class ninja_session():
     
     def get(self, url, headers={}, timeout=(), accepted_code=[200], unaccepted_strings=[], expected_string=None):
         n = 0
+        if headers is None: headers = {}
         if timeout == (): timeout = (3.05, 27)
         resultat = None
         preferred = False
