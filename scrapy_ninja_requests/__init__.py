@@ -61,7 +61,7 @@ class ninja_session():
         
         # scrapy ninja provided
         if not(self.key is None):
-            r = self.req.get(url='https://proxy.rapidapi.shared.scrapy.ninja/proxies/%s/%s' % (self.key, self.country))
+            r = self.req.get(url='https://proxy.tools.wareld.com/proxies/%s/%s' % (self.key, self.country))
             for i in r.json()['proxies']:
                 self.proxylist.append(i)
         
